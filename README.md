@@ -12,7 +12,7 @@
 > **Safeguarded Stochastic Polyak Step Sizes for Non-smooth Optimization: Robust Performance Without Small (Sub)Gradients**
 > Dimitris Oikonomou, Nicolas Loizou. *ICML 2026.*
 
-The package provides two `torch.optim.Optimizer` subclasses — `SPS_safe` and `IMA_SPS_safe` — that adapt the Polyak step size for **convex, Lipschitz, non-smooth** objectives without requiring interpolation or oracle access to $f_i(x^*)$. Instead of capping the step size from above (as in SPS$_{\max}$), they place a single safeguard $M$ on the **denominator** $\|g_i^t\|^2$, which (i) prevents step-size blow-up when subgradients vanish, (ii) keeps the rule genuinely adaptive — never collapsing to a constant update — and (iii) admits an equivalent interpretation as an **adaptive clipped subgradient method** (Proposition 2.1 of the paper).
+The package provides two `torch.optim.Optimizer` subclasses — `SPS_safe` and `IMA_SPS_safe` — that adapt the Polyak step size for **convex, Lipschitz, non-smooth** objectives without requiring interpolation or oracle access to $f_i(x^*)$. Instead of capping the step size from above (as in $\mathrm{SPS}_{\max}$), they place a single safeguard $M$ on the **denominator** $\|g_i^t\|^2$, which (i) prevents step-size blow-up when subgradients vanish, (ii) keeps the rule genuinely adaptive — never collapsing to a constant update — and (iii) admits an equivalent interpretation as an **adaptive clipped subgradient method** (Proposition 2.1 of the paper).
 
 ---
 
@@ -89,7 +89,7 @@ Given a mini-batch loss $f_i$ with stochastic subgradient $g_i^t \in \partial f_
 
 $$\gamma_t = \frac{f_i(x^t) - \ell_i^*}{\max\{\|g_i^t\|^2,\ M\}}, \qquad x^{t+1} = x^t - \gamma_t g_i^t.$$
 
-The single hyper-parameter $M > 0$ replaces *both* the clip $\gamma_b$ of SPS$_{\max}$ and the oracle values $f_i(x^*)$ required by SPS$^*$ / IMA-SPS.
+The single hyper-parameter $M > 0$ replaces *both* the clip $\gamma_b$ of $\mathrm{SPS}_{\max}$ and the oracle values $f_i(x^*)$ required by $\mathrm{SPS}^*$ / IMA-SPS.
 
 For momentum, **IMA-SPS_safe** uses the Iterate Moving Average form of Stochastic Heavy Ball (Sebbouh et al., 2021) with a safeguarded Polyak step on $z$:
 
