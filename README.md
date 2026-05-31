@@ -2,7 +2,7 @@
 
 **Safeguarded Polyak step sizes for non-smooth stochastic optimization — robust to vanishing gradients in deep networks.**
 
-[![Paper: ICML 2026](https://img.shields.io/badge/Paper-ICML%202026-1f6feb)](https://arxiv.org/abs/2512.02342)
+[![PyPI](https://img.shields.io/pypi/v/sps_safe)](https://pypi.org/project/sps_safe/)
 [![arXiv](https://img.shields.io/badge/arXiv-2512.02342-b31b1b)](https://arxiv.org/abs/2512.02342)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
@@ -12,7 +12,7 @@
 > **Safeguarded Stochastic Polyak Step Sizes for Non-smooth Optimization: Robust Performance Without Small (Sub)Gradients**
 > Dimitris Oikonomou, Nicolas Loizou. *ICML 2026.*
 
-The package provides two `torch.optim.Optimizer` subclasses — `SPS_safe` and `IMA_SPS_safe` — that adapt the Polyak step size for **convex, Lipschitz, non-smooth** objectives without requiring interpolation or oracle access to $f_i(x^*)$. Instead of capping the step size from above (as in SPS$_{\max}$), they place a single safeguard $M$ on the **denominator** $\\|g_i^t\\|^2$, which (i) prevents step-size blow-up when subgradients vanish, (ii) keeps the rule genuinely adaptive — never collapsing to a constant update — and (iii) admits an equivalent interpretation as an **adaptive clipped subgradient method** (Proposition 2.1 of the paper).
+The package provides two `torch.optim.Optimizer` subclasses — `SPS_safe` and `IMA_SPS_safe` — that adapt the Polyak step size for **convex, Lipschitz, non-smooth** objectives without requiring interpolation or oracle access to $f_i(x^*)$. Instead of capping the step size from above (as in SPS$_{\max}$), they place a single safeguard $M$ on the **denominator** $\|g_i^t\|^2$, which (i) prevents step-size blow-up when subgradients vanish, (ii) keeps the rule genuinely adaptive — never collapsing to a constant update — and (iii) admits an equivalent interpretation as an **adaptive clipped subgradient method** (Proposition 2.1 of the paper).
 
 ---
 
@@ -29,6 +29,12 @@ The package provides two `torch.optim.Optimizer` subclasses — `SPS_safe` and `
 ---
 
 ## Installation
+
+From PyPI:
+
+```bash
+pip install sps_safe
+```
 
 From source:
 
@@ -81,25 +87,18 @@ optimizer = IMA_SPS_safe(
 
 Given a mini-batch loss $f_i$ with stochastic subgradient $g_i^t \in \partial f_i(x^t)$, **SPS_safe** sets
 
-$$\gamma_t = \frac{f_i(x^t) - \ell_i^*}{\max\\{\\|g_i^t\\|^2,\ M\\}}, \qquad x^{t+1} = x^t - \gamma_t g_i^t.$$
+$$\gamma_t = \frac{f_i(x^t) - \ell_i^*}{\max\{\|g_i^t\|^2,\ M\}}, \qquad x^{t+1} = x^t - \gamma_t g_i^t.$$
 
 The single hyper-parameter $M > 0$ replaces *both* the clip $\gamma_b$ of SPS$_{\max}$ and the oracle values $f_i(x^*)$ required by SPS$^*$ / IMA-SPS.
 
 For momentum, **IMA-SPS_safe** uses the Iterate Moving Average form of Stochastic Heavy Ball (Sebbouh et al., 2021) with a safeguarded Polyak step on $z$:
 
-$$\eta_t = \frac{\big[f_i(x^t) - \ell_i^* + \lambda_t \langle g_i^t,\ x^t - x^{t-1}\rangle\big]_+}{\max\\{\\|g_i^t\\|^2,\ M\\}},$$
+$$\eta_t = \frac{\big[f_i(x^t) - \ell_i^* + \lambda_t \langle g_i^t,\ x^t - x^{t-1}\rangle\big]_+}{\max\{\|g_i^t\|^2,\ M\}},$$
 
 $$z^{t+1} = z^t - \eta_t g_i^t, \qquad x^{t+1} = \frac{\lambda x^t + z^{t+1}}{\lambda + 1}.$$
 
 The averaging parameter $\lambda \ge 0$ corresponds to SHB momentum $\beta = \lambda / (1 + \lambda)$.
 
-### Why safeguard the denominator?
-
-For SPS$_{\max}$, the upper bound $\gamma_b$ is hit far more often than is comfortable in DNN training (§2.2 of the paper): on a ResNet-20 / CIFAR-10 sweep, $\gamma_b$ was selected in **31.8%** of iterations with the constant rule and in **98.45%** of iterations with the smoothed variant — meaning the method is, in practice, behaving like a hand-tuned learning-rate schedule rather than a Polyak step. `SPS_safe` is genuinely adaptive at every step regardless of $M$.
-
-### Connection to gradient clipping
-
-**Proposition 2.1.** *SSM with `SPS_safe` and $M = c^2$ is algebraically equivalent to Clipped SSM with the adaptive step size $\tilde\gamma_t = \frac{f_i(x^t) - \ell_i^*}{c \cdot \max\\{c,\ \\|g_i^t\\|\\}}$.* This gives the first theoretical guarantees for a Polyak-style clipped subgradient method.
 
 ### Theoretical guarantees
 
@@ -121,7 +120,7 @@ All results hold **without** the interpolation assumption and **without** oracle
 |---|---|---|---|
 | `params` | iterable | — | Parameters to optimize. |
 | `ell_star` | float | `0.0` | Lower bound $\ell_i^*$ on the mini-batch loss. Typically `0.0` for non-negative losses. |
-| `M` | float | `1.0` | Safeguard threshold on $\\|g_i^t\\|^2$ in the denominator. |
+| `M` | float | `1.0` | Safeguard threshold on $\|g_i^t\|^2$ in the denominator. |
 | `weight_decay` | float | `0.0` | L2 weight-decay coefficient. |
 
 ### `IMA_SPS_safe(params, ell_star=0.0, lambd=1.0, M=1.0, weight_decay=0.0)`
@@ -131,7 +130,7 @@ All results hold **without** the interpolation assumption and **without** oracle
 | `params` | iterable | — | Parameters to optimize. |
 | `ell_star` | float | `0.0` | Lower bound $\ell_i^*$ on the mini-batch loss. |
 | `lambd` | float | `1.0` | IMA averaging parameter $\lambda \ge 0$. Equivalent SHB momentum is $\beta = \lambda / (1 + \lambda)$. |
-| `M` | float | `1.0` | Safeguard threshold on $\\|g_i^t\\|^2$. Pass a value $\le 0$ to auto-initialise from the first $\\|g_i^t\\|^2$. |
+| `M` | float | `1.0` | Safeguard threshold on $\|g_i^t\|^2$. Pass a value $\le 0$ to auto-initialise from the first $\|g_i^t\|^2$. |
 | `weight_decay` | float | `0.0` | L2 weight-decay coefficient. |
 
 Both classes expose the standard `torch.optim.Optimizer` interface. The only non-standard requirement is that `.step()` is called as `optimizer.step(loss=loss)`.

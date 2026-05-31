@@ -8,7 +8,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 # Package meta-data.
 NAME = 'sps_safe'
-VERSION = '1.0'
+VERSION = '1.0.0'
 AUTHOR = 'Dimitris Oikonomou'
 EMAIL = 'doikono1@jh.edu'
 DESCRIPTION = 'Safeguarded Stochastic Polyak Step Sizes for Non-smooth Optimization'
