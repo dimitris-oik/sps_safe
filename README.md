@@ -12,7 +12,7 @@
 > **Safeguarded Stochastic Polyak Step Sizes for Non-smooth Optimization: Robust Performance Without Small (Sub)Gradients**
 > Dimitris Oikonomou, Nicolas Loizou. *ICML 2026.*
 
-The package provides two `torch.optim.Optimizer` subclasses — `SPS_safe` and `IMA_SPS_safe` — that adapt the Polyak step size for **convex, Lipschitz, non-smooth** objectives without requiring interpolation or oracle access to $f_i(x^*)$. Instead of capping the step size from above (as in $\mathrm{SPS}_{\max}$), they place a single safeguard $M$ on the **denominator** $\|g_i^t\|^2$, which (i) prevents step-size blow-up when subgradients vanish, (ii) keeps the rule genuinely adaptive — never collapsing to a constant update — and (iii) admits an equivalent interpretation as an **adaptive clipped subgradient method** (Proposition 2.1 of the paper).
+The package provides two `torch.optim.Optimizer` subclasses — `SPS_safe` and `IMA_SPS_safe` — that adapt the Polyak step size for **convex, Lipschitz, non-smooth** objectives without requiring interpolation or oracle access to $f_i(x^\ast)$. Instead of capping the step size from above (as in $\mathrm{SPS}_{\max}$), they place a single safeguard $M$ on the **denominator** $\\|g_i^t\\|^2$, which (i) prevents step-size blow-up when subgradients vanish, (ii) keeps the rule genuinely adaptive — never collapsing to a constant update — and (iii) admits an equivalent interpretation as an **adaptive clipped subgradient method** (Proposition 2.1 of the paper).
 
 ---
 
@@ -87,13 +87,13 @@ optimizer = IMA_SPS_safe(
 
 Given a mini-batch loss $f_i$ with stochastic subgradient $g_i^t \in \partial f_i(x^t)$, **SPS_safe** sets
 
-$$\gamma_t = \frac{f_i(x^t) - \ell_i^*}{\max\{\|g_i^t\|^2,\ M\}}, \qquad x^{t+1} = x^t - \gamma_t g_i^t.$$
+$$\gamma_t = \frac{f_i(x^t) - \ell_i^\ast}{\max\\{\\|g_i^t\\|^2,\ M\\}}, \qquad x^{t+1} = x^t - \gamma_t g_i^t.$$
 
-The single hyper-parameter $M > 0$ replaces *both* the clip $\gamma_b$ of $\mathrm{SPS}_{\max}$ and the oracle values $f_i(x^*)$ required by $\mathrm{SPS}^*$ / IMA-SPS.
+The single hyper-parameter $M > 0$ replaces *both* the clip $\gamma_b$ of $\mathrm{SPS}_{\max}$ and the oracle values $f_i(x^\ast)$ required by $\mathrm{SPS}^\ast$ / IMA-SPS.
 
 For momentum, **IMA-SPS_safe** uses the Iterate Moving Average form of Stochastic Heavy Ball (Sebbouh et al., 2021) with a safeguarded Polyak step on $z$:
 
-$$\eta_t = \frac{\big[f_i(x^t) - \ell_i^* + \lambda_t \langle g_i^t,\ x^t - x^{t-1}\rangle\big]_+}{\max\{\|g_i^t\|^2,\ M\}},$$
+$$\eta_t = \frac{\big[f_i(x^t) - \ell_i^\ast + \lambda_t \langle g_i^t,\ x^t - x^{t-1}\rangle\big]_+}{\max\\{\\|g_i^t\\|^2,\ M\\}},$$
 
 $$z^{t+1} = z^t - \eta_t g_i^t, \qquad x^{t+1} = \frac{\lambda x^t + z^{t+1}}{\lambda + 1}.$$
 
@@ -108,7 +108,7 @@ The averaging parameter $\lambda \ge 0$ corresponds to SHB momentum $\beta = \la
 | Convex, Lipschitz + momentum | `IMA_SPS_safe` | $O(T^{-1/2})$ Cesàro **and** last-iterate (Theorems 3.4, 3.5) |
 | Interpolated ($\sigma^2 = 0$) | both | neighborhood collapses; exact convergence |
 
-All results hold **without** the interpolation assumption and **without** oracle access to $f_i(x^*)$ — both of which were required by prior Polyak-type step sizes in the non-smooth setting (Loizou et al., 2021; Garrigos et al., 2023; Gower et al., 2025).
+All results hold **without** the interpolation assumption and **without** oracle access to $f_i(x^\ast)$ — both of which were required by prior Polyak-type step sizes in the non-smooth setting (Loizou et al., 2021; Garrigos et al., 2023; Gower et al., 2025).
 
 ---
 
@@ -119,8 +119,8 @@ All results hold **without** the interpolation assumption and **without** oracle
 | Argument | Type | Default | Description |
 |---|---|---|---|
 | `params` | iterable | — | Parameters to optimize. |
-| `ell_star` | float | `0.0` | Lower bound $\ell_i^*$ on the mini-batch loss. Typically `0.0` for non-negative losses. |
-| `M` | float | `1.0` | Safeguard threshold on $\|g_i^t\|^2$ in the denominator. |
+| `ell_star` | float | `0.0` | Lower bound $\ell_i^\ast$ on the mini-batch loss. Typically `0.0` for non-negative losses. |
+| `M` | float | `1.0` | Safeguard threshold on $\\|g_i^t\\|^2$ in the denominator. |
 | `weight_decay` | float | `0.0` | L2 weight-decay coefficient. |
 
 ### `IMA_SPS_safe(params, ell_star=0.0, lambd=1.0, M=1.0, weight_decay=0.0)`
@@ -128,9 +128,9 @@ All results hold **without** the interpolation assumption and **without** oracle
 | Argument | Type | Default | Description |
 |---|---|---|---|
 | `params` | iterable | — | Parameters to optimize. |
-| `ell_star` | float | `0.0` | Lower bound $\ell_i^*$ on the mini-batch loss. |
+| `ell_star` | float | `0.0` | Lower bound $\ell_i^\ast$ on the mini-batch loss. |
 | `lambd` | float | `1.0` | IMA averaging parameter $\lambda \ge 0$. Equivalent SHB momentum is $\beta = \lambda / (1 + \lambda)$. |
-| `M` | float | `1.0` | Safeguard threshold on $\|g_i^t\|^2$. Pass a value $\le 0$ to auto-initialise from the first $\|g_i^t\|^2$. |
+| `M` | float | `1.0` | Safeguard threshold on $\\|g_i^t\\|^2$. Pass a value $\le 0$ to auto-initialise from the first $\\|g_i^t\\|^2$. |
 | `weight_decay` | float | `0.0` | L2 weight-decay coefficient. |
 
 Both classes expose the standard `torch.optim.Optimizer` interface. The only non-standard requirement is that `.step()` is called as `optimizer.step(loss=loss)`.
